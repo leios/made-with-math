@@ -179,8 +179,6 @@ __verse iris_only(quibble_point_2D pt, float time |
         pt.x += 0.5 - 0.5*(time - TIME_B6)/(TIME_B7-TIME_B6);
     }
 
-
-
     if (_i > num_ignore && pt.y > -qcam.world_size_y*openness*0.5){
         histogram_output_prgba8888(pt, eye_color, qcam, qpix);
     }
@@ -266,51 +264,3 @@ __verse eye_shadow(quibble_point_2D pt, quibble_pcolor_rgba8888 clr |
     }
 
 }
-
-// This assumes the eyebrow is from 0 -> 2 in x
-quibble_point_2D eyebrow_shaping(quibble_point_2D pt, float time){
-
-    if (time < 0.5){
-        pt.y -= 0.5*pt.x*pt.x*time;
-        pt.y += time;
-    }
-    else {
-        pt.y -= 0.25*pt.x*pt.x;
-        pt.y += 0.5;
-    }
-
-    return pt;
-}
-
-__verse eyebrow(quibble_point_2D pt, quibble_pcolor_rgba8888 clr,
-                float time | 
-                float iris_size = 0.25; float separation = 0.5;
-                int num_ignore = 20;){
-
-    pt.y *= (1-(pt.x*pt.x));
-
-    // centers eyebrow from 0->2
-    pt.x += 1;
-    pt.y += 0.1*pt.x*pt.x;
-
-    pt = eyebrow_shaping(pt, time);
-
-    // brings brow back a bit, but not fully to avoid unibrow.
-    pt.x -= 0.5;
-
-    // resizing
-    pt.x *= iris_size*2;
-    pt.y *= iris_size*2;
-
-    // separates and raises brow
-    pt.x += 0.5*separation;
-    pt.y -= iris_size * 3;
-
-    if (_i > num_ignore){
-        histogram_output_prgba8888(pt, clr, qcam, qpix);
-        pt.x *= -1;
-        histogram_output_prgba8888(pt, clr, qcam, qpix);
-    }
-
-}
-

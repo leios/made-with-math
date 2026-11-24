@@ -39,95 +39,6 @@ __poem bg_shader(quibble_pixels_prgba8888 qps,
     quibble_pcolor_rgba8888 qcolor = qb_pcolor_rgba8888(0,0,b,1,0.01);
     histogram_overwrite_prgba8888(pt, qcolor, qcam, qps);
 }
-/*----------------------------------------------------------------------------//
-    COMET
-//----------------------------------------------------------------------------*/
-
-quibble_pcolor_rgba8888 comet_fire(quibble_point_2D pt, float planet_radius){
-    float r = sqrt(pt.x*pt.x + pt.y*pt.y);
-    float red = 1;
-    float green = 0.25 + 0.75*(r / planet_radius);
-    float blue = r / planet_radius;
-    float alpha = 0.5+0.5*(1-(r / planet_radius));
-
-    return qb_pcolor_rgba8888(red, green, blue, alpha, 0.5);
-}
-
-quibble_pcolor_rgba8888 comet_hole(quibble_point_2D pt,
-                                   quibble_pcolor_rgba8888 clr,
-                                   float comet_distance,
-                                   float comet_size){
-    pt.x -= comet_distance;
-    float r = sqrt(pt.x*pt.x + pt.y*pt.y);
-
-    if (r < comet_size * 0.4){
-        return qb_pcolor_rgba8888(0,0,0,1,clr.priority);
-    }
-    else {
-        return clr;
-    }
-    
-}
-
-void create_comet(quibble_point_2D pt, float planet_radius,
-                  __global quibble_pcolor_rgba8888 *qpix,
-                  quibble_simple_camera qcam,
-                  float time, float openness){
-    float primitive_radius = 0.3;
-    float comet_distance = 1;
-    float comet_size = 0.04;
-    float tail_size = 7.5;
-
-    quibble_pcolor_rgba8888 comet_color = comet_fire(pt, planet_radius);
-
-    pt.x *= comet_size;
-    pt.y *= comet_size;
-
-    if (pt.y > 0){
-        pt.x *= (1-(pt.y/comet_size));
-    }
-
-    pt.x += comet_distance;
-
-    quibble_point_2D tmp;
-
-    if (pt.y > 0){
-        float tail_angle = pt.y * tail_size;
-        tmp.x = pt.x*cos(tail_angle) - pt.y*sin(tail_angle);
-        tmp.y = pt.x*sin(tail_angle) + pt.y*cos(tail_angle);
-    }
-
-    pt.x = tmp.x;
-    pt.y = tmp.y;
-
-    comet_color = comet_hole(pt, comet_color, comet_distance, comet_size);
-
-    pt = rotate_about_origin(pt, -2*M_PI*time);
-
-    pt.x *= 1.4;
-
-    if (time > 3.16167 && time < 4.16167){
-        float r = sqrt(pt.x*pt.x + pt.y*pt.y);
-        float theta = atan2(pt.y, pt.x);
-        float t = 2*(time - 3.16167);
-        float comet_wiggle_amplitude = 0.03 * t;
-
-        if (pt.y < 0){
-            theta += 2*M_PI;
-        }
-
-        r += comet_wiggle_amplitude*sin(10*theta);
-
-        pt.y = r*sin(theta);
-        pt.x = r*cos(theta);
-
-    }
-
-    if (pt.y > -qcam.world_size_y*0.5*openness){
-         histogram_output_prgba8888(pt, comet_color, qcam, qpix);
-    }
- 
-}
 
 /*----------------------------------------------------------------------------//
     RINGS
@@ -169,7 +80,7 @@ quibble_pcolor_rgba8888 color_disk(quibble_point_2D pt, float max_radius){
 }
 
 __verse create_rings(quibble_point_2D ring_pt |
-                     float radius = 0.850;
+                     float radius = 1;
                      float thickness = 0.30;
                      float project_angle = M_PI*0.425;
                      float project_distance = -2;){
@@ -365,7 +276,6 @@ __poem space_bulk(quibble_pixels_prgba8888 qpix,
                 histogram_output_prgba8888(output_point, _clr, cam, qpix);
             }
             @VCALL star_position(_pt);
-            create_comet(_pt, planet_radius, qpix, cam, time, openness);
         }
     }
 }

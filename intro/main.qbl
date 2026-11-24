@@ -135,8 +135,8 @@ __poem intro_sequence(quibble_pixels_prgba8888 qpix,
 
     if (time >= TIME_B1 && time < TIME_C1) {
 
-        float iris_size = 1;
-        @SCALL circle_chaos(2000, qcam, qcolor | radius = 1;){
+        float iris_size = 0.9;
+        @SCALL circle_chaos(3000, qcam, qcolor | radius = 1;){
             @VCALL iris_only(_pt, time | float iris_size = iris_size;
                              float openness = openness;);
             @VCALL reflection(_pt | float iris_size = iris_size;);
