@@ -94,7 +94,7 @@ int main(int argc, char **argv){
                                                          world_position_y);
     float fps = 30;
 
-    float start_time = 5.8;
+    float start_time = 2.6;
     float final_time = 8;
     float curr_time = start_time;
     int i = curr_time * fps;
