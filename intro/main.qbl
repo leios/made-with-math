@@ -1,0 +1,205 @@
+#define TIME_A0 0.601114
+#define TIME_A1 1.16201
+#define TIME_A2 1.742658
+#define TIME_A3 2.055067
+#define TIME_A4 2.357713
+#define TIME_A5 2.648156
+#define TIME_B1 2.955684
+#define TIME_B2 3.125765
+#define TIME_B3 3.260771
+#define TIME_B4 3.426739
+#define TIME_B5 3.568617
+#define TIME_B6 3.714796
+#define TIME_B7 3.844095
+#define TIME_B8 4.016495
+#define TIME_B9 4.195051
+#define TIME_B10 4.313063
+#define TIME_B11 4.484436
+#define TIME_B12 4.614952
+#define TIME_C1 4.77459
+#define TIME_C2 4.931338
+#define TIME_D1 5.077914
+#define TIME_D2 5.252063
+#define TIME_D3 5.382815
+#define TIME_D4 5.51743
+#define TIME_D5 5.665852
+#define TIME_D6 5.821177
+#define TIME_E1 5.959243
+#define TIME_E2 6.124923
+#define TIME_E3 6.256087
+#define TIME_E4 6.394153
+
+@include "QB/chaos.qbl"
+@include "QB/output.qbl"
+@include "eye.qbl"
+@include "space.qbl"
+@include "sunset.qbl"
+@include "lolli.qbl"
+
+quibble_pcolor_rgba8888 grid_texture(quibble_point_2D pt){
+    float ratio = 1;
+    float priority = 0.0;
+    float line_thickness = 0.005;
+    float line_distance = 0.5;
+
+    if (fabs(fmod(pt.x, line_distance)) - line_thickness <= 0){
+        ratio = 0.4;
+        priority = 0.01;
+    }
+    
+    if (fabs(fmod(pt.y, line_distance)) - line_thickness <= 0){
+        ratio = 0.4;
+        priority = 0.01;
+    }
+
+    return qb_pcolor_rgba8888(ratio, ratio, ratio, 1, priority);
+}
+
+
+__poem bg_layer(quibble_pixels_prgba8888 qpix,
+                quibble_simple_camera qcam, float time){
+
+    float lid_close_time = 0.1;
+    float openness = 1;
+    if (time >= TIME_B1 - lid_close_time && time < TIME_B1){
+        openness = 1-2*(time-(TIME_B1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_B1 && time <= TIME_B1 + lid_close_time) {
+        openness = -1+2*(time-TIME_B1)/lid_close_time;
+
+    } else if (time >= TIME_C1 - lid_close_time && time <= TIME_C1) {
+        openness = 1-2*(time-(TIME_C1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_C1 && time <= TIME_C1 + lid_close_time) {
+        openness = -1+2*(time-TIME_C1)/lid_close_time;
+
+    } else if (time >= TIME_D1 - lid_close_time && time <= TIME_D1) {
+        openness = 1-2*(time-(TIME_D1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_D1 && time <= TIME_D1 + lid_close_time) {
+        openness = -1+2*(time-TIME_D1)/lid_close_time;
+
+    } else if (time >= TIME_E1 - lid_close_time && time <= TIME_E1) {
+        openness = 1-2*(time-(TIME_E1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_E1 && time <= TIME_E1 + lid_close_time) {
+        openness = -1+2*(time-TIME_E1)/lid_close_time;
+    }
+
+
+    quibble_point_2D pt = qb_find_point_location(_idx, qcam);
+
+    quibble_pcolor_rgba8888 qcolor = grid_texture(pt);
+
+    if (time > TIME_C1 && time < TIME_D1 &&
+        pt.y > -qcam.world_size_y*0.5*openness){
+        float r = sqrt(pt.x*pt.x + pt.y*pt.y);
+        float b = (1-0.75*r);
+        if (b < 0){
+            b = 0;
+        }
+
+        qcolor = qb_pcolor_rgba8888(0, 0, b, 1, 0);
+    }
+
+    if (time > TIME_D1 && time < TIME_E1 &&
+        pt.y > -qcam.world_size_y*0.5*openness){
+
+        float x = 0;
+        float y = 0;
+
+        float sun_radius = 0.8;
+        if (time > TIME_D2 && time <= TIME_D5){
+            x -= 1.75*(time - TIME_D2)/(TIME_D5 - TIME_D2);
+            y -= 0.75*(time - TIME_D2)/(TIME_D5 - TIME_D2);
+            sun_radius -= 0.4*(time-TIME_D2)/(TIME_D5 - TIME_D2);
+        } else if (time > TIME_D5){
+            x = -1.75;
+            y = -0.75;
+            sun_radius = 0.4;
+        }
+        quibble_point_2D sun_location = qb_point_2D(x, y);
+        qcolor = sunset_color(pt, sun_location, sun_radius, TIME_D1, time,
+                              TIME_D5);
+    }
+
+    histogram_overwrite_prgba8888(pt, qcolor, qcam, qpix);
+
+}
+
+__poem intro_sequence(quibble_pixels_prgba8888 qpix,
+                      quibble_simple_camera qcam,
+                      float time){
+
+    quibble_pcolor_rgba8888 qcolor = qb_pcolor_rgba8888(0,0,0,1,0.1);
+    quibble_pcolor_rgba8888 eyelash_color = qb_pcolor_rgba8888(0,0,0,1,0.7);
+
+    float eye_size = qcam.world_size_x * 0.5;
+
+    bool render_lashes = false;
+
+    // Each scene will have a blink transition, so the eye openness will
+    // define this. 3 frames down and up, so 0.2 seconds for full blink.
+    float lid_close_time = 0.1;
+    float openness = 1;
+    if (time >= TIME_C1 - lid_close_time && time <= TIME_C1) {
+        openness = 1-2*(time-(TIME_C1-lid_close_time))/lid_close_time;
+        render_lashes = true;
+    } else if (time >= TIME_C1 && time <= TIME_C1 + lid_close_time) {
+        openness = -1+2*(time-TIME_C1)/lid_close_time;
+        render_lashes = true;
+
+    } else if (time >= TIME_D1 - lid_close_time && time <= TIME_D1) {
+        openness = 1-2*(time-(TIME_D1-lid_close_time))/lid_close_time;
+        render_lashes = true;
+    } else if (time >= TIME_D1 && time <= TIME_D1 + lid_close_time) {
+        openness = -1+2*(time-TIME_D1)/lid_close_time;
+        render_lashes = true;
+
+    } else if (time >= TIME_E1 - lid_close_time && time <= TIME_E1) {
+        openness = 1-2*(time-(TIME_E1-lid_close_time))/lid_close_time;
+        render_lashes = true;
+    } else if (time >= TIME_E1 && time <= TIME_E1 + lid_close_time) {
+        openness = -1+2*(time-TIME_E1)/lid_close_time;
+        render_lashes = true;
+    }
+
+    if (render_lashes){
+
+        @SCALL rectangle_chaos(1000, qcam, qcolor | float scale_y = 0.05;){
+            @VCALL eyelash(_pt, eyelash_color |
+                           float openness = openness;
+                           float eye_size = eye_size;);
+        }
+    }
+
+    if (time >= TIME_A5 && time < TIME_C1) {
+
+        float iris_size = 0.55;
+        if (time < TIME_B1){
+            iris_size = 0.55*(time-TIME_A5)/(TIME_B1 - TIME_A5);
+        }
+        if (time > TIME_B8 && time < TIME_B11){
+            iris_size = 0.55 + 0.35*(time-TIME_B8)/(TIME_B11-TIME_B8);
+        }
+        if (time >= TIME_B11){
+            iris_size = 0.9;
+        }
+        
+        @SCALL circle_chaos(3000, qcam, qcolor | radius = 1;){
+            @VCALL iris_only(_pt, time | float iris_size = iris_size;
+                             float openness = openness;);
+            @VCALL reflection(_pt | float iris_size = iris_size;);
+            if (time > TIME_B1){
+                @VCALL electrons(_pt, time | float iris_size = iris_size;);
+            }
+        }
+
+    } 
+
+    if (time >= TIME_E1){
+        @SCALL circle_chaos(1000, qcam, qcolor){
+            @VCALL lolli_head(_pt);
+        }
+        @SCALL rectangle_chaos(2000, qcam, qcolor){
+            @VCALL lolli_body(_pt);
+        }
+    }
+
+}

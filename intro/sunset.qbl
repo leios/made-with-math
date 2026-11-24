@@ -1,0 +1,39 @@
+quibble_pcolor_rgba8888 sunset_color(quibble_point_2D pt,
+                                     quibble_point_2D sun_location, 
+                                     float sun_radius,
+                                     float start_time,
+                                     float time,
+                                     float final_time){
+
+    float horizon_position = sun_location.y + sun_radius*1.25;
+
+    float r = sqrt((pt.x-sun_location.x)*(pt.x-sun_location.x)+
+                   (pt.y-sun_location.y)*(pt.y-sun_location.y));
+
+    if (r < sun_radius){
+        float ratio = ((sun_location.y - pt.y) + sun_radius) / (2*sun_radius);
+        return qb_pcolor_rgba8888(1,ratio,0,1,0.5);
+    }
+
+    if (pt.y < horizon_position){
+        r /= sun_radius*0.75;
+        return qb_pcolor_rgba8888(0.75 + 0.25*(1/r),1/r,0,1,0.4);
+    }
+    if (pt.y > horizon_position){
+
+        if (time < final_time){
+            float relative_y = pt.y - horizon_position;
+            float movement_ratio = (time - start_time)/(final_time - start_time);
+            pt.x += (1 - movement_ratio) * relative_y*(0.5*cos(relative_y*time));
+            pt.x += (1 - movement_ratio) * relative_y*(0.10*cos(15*relative_y*time));
+            pt.x += (1 - movement_ratio) * relative_y*(0.05*cos(30*relative_y*time));
+        }
+
+        float relative_x = pt.x - sun_location.x;
+        float rratio = exp(-relative_x*relative_x/2*(0.5/sun_radius));
+        float yratio = exp(-relative_x*relative_x/2*(5/sun_radius));
+        return qb_pcolor_rgba8888(rratio, yratio*0.5, 0, 1, 0.4);
+    }
+
+    return qb_pcolor_rgba8888(0,0,0,1,0.4);
+}

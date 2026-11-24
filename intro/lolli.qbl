@@ -1,0 +1,61 @@
+__verse lolli_head(quibble_point_2D pt | 
+                   float head_radius = 0.4; int num_ignore = 20;){
+    quibble_pcolor_rgba8888 clr = qb_pcolor_rgba8888(0,0,0,1,0.6);
+    quibble_pcolor_rgba8888 eye_clr = qb_pcolor_rgba8888(1,1,1,1,0.61);
+
+    pt.x *= head_radius;
+    pt.y *= head_radius;
+
+    quibble_point_2D right_eye_pt = pt;
+
+    right_eye_pt.x *= 0.15;
+    right_eye_pt.y *= 0.3;
+    right_eye_pt.x += 0.25*head_radius;
+
+    quibble_point_2D left_eye_pt = right_eye_pt;
+    left_eye_pt.x *= -1;
+
+    pt.x -= 1.75;
+    pt.y -= 0.75;
+    
+    right_eye_pt.x -= 1.75;
+    right_eye_pt.y -= 0.75;
+
+    left_eye_pt.x -= 1.75;
+    left_eye_pt.y -= 0.75;
+
+    if (_i > num_ignore && pt.y > -qcam.world_size_y*openness*0.5){
+        histogram_output_prgba8888(pt, clr, qcam, qpix);
+    }
+
+    if (time > TIME_E2 && time < TIME_E3){
+        float eye_location = 0.1*head_radius*(time - TIME_E2)/(TIME_E3 - TIME_E2);
+
+        right_eye_pt.x += eye_location;
+        left_eye_pt.x += eye_location;
+    } else if (time >= TIME_E3 && time < TIME_E4){
+        float eye_location = 0.1*head_radius*(1-(time - TIME_E3)/(TIME_E4 - TIME_E3));
+        right_eye_pt.x += eye_location;
+        left_eye_pt.x += eye_location;
+    }
+    if (_i > num_ignore && right_eye_pt.y > -qcam.world_size_y*openness*0.5){
+        histogram_output_prgba8888(right_eye_pt, eye_clr, qcam, qpix);
+    }
+    if (_i > num_ignore && left_eye_pt.y > -qcam.world_size_y*openness*0.5){
+        histogram_output_prgba8888(left_eye_pt, eye_clr, qcam, qpix);
+    }
+
+}
+
+__verse lolli_body(quibble_point_2D pt | int num_ignore = 20;){
+    quibble_pcolor_rgba8888 clr = qb_pcolor_rgba8888(0,0,0,1,0.6);
+
+    pt.x *= 0.15;
+    pt.x -= 1.75;
+    pt.y *= 0.5;
+    pt.y += 0.5 - 0.75 + 0.5;
+
+    if (_i > num_ignore && pt.y > -qcam.world_size_y*openness*0.5){
+        histogram_output_prgba8888(pt, clr, qcam, qpix);
+    }
+}

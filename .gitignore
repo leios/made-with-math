@@ -53,3 +53,17 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# other
+*.png
+*.mp4
+*.out
+*.csv
+*program.txt
+*.wav
+*.aup3
+*.aup3-shm
+*.aup3-wal
+*.blend
+*.blend1
+
