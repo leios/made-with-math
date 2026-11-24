@@ -1,4 +1,3 @@
-@include "QB/output.qbl"
 @include "QB/chaos.qbl"
 
 /*----------------------------------------------------------------------------//
@@ -73,7 +72,7 @@ quibble_pcolor_rgba8888 comet_hole(quibble_point_2D pt,
 void create_comet(quibble_point_2D pt, float planet_radius,
                   __global quibble_pcolor_rgba8888 *qpix,
                   quibble_simple_camera qcam,
-                  float time){
+                  float time, float openness){
     float primitive_radius = 0.3;
     float comet_distance = 1;
     float comet_size = 0.04;
@@ -124,7 +123,10 @@ void create_comet(quibble_point_2D pt, float planet_radius,
 
     }
 
-    histogram_output_prgba8888(pt, comet_color, qcam, qpix);
+    if (pt.y > -qcam.world_size_y*0.5*openness){
+         histogram_output_prgba8888(pt, comet_color, qcam, qpix);
+    }
+ 
 }
 
 /*----------------------------------------------------------------------------//
@@ -210,9 +212,11 @@ __verse create_rings(quibble_point_2D ring_pt |
         ring_output_pt.y *= ring_scale;
     }
 
-    histogram_output_prgba8888(ring_output_pt,
-                               ring_color,
-                               cam, qpix);
+    if (ring_output_pt.y > -qcam.world_size_y*0.5*openness){
+        histogram_output_prgba8888(ring_output_pt,
+                                   ring_color,
+                                   cam, qpix);
+    }
 }
                      
 
@@ -235,7 +239,9 @@ __verse star_position(quibble_point_2D star_pt |
     star_pt.y = star_scale_factor * star_pt.y + star_y;
 
 
-    histogram_output_prgba8888(star_pt, qb_pcolor_rgba8888(1,1,1,1,0.25), cam, qpix);
+    if (star_pt.y > -qcam.world_size_y*0.5*openness){
+        histogram_output_prgba8888(star_pt, qb_pcolor_rgba8888(1,1,1,1,0.25), cam, qpix);
+    }
 }
 
 /*----------------------------------------------------------------------------//
@@ -309,8 +315,8 @@ quibble_pcolor_rgba8888 planet_shade(quibble_point_2D pt,
     SCENE
 //----------------------------------------------------------------------------*/
 
-__poem scene_1_bulk(quibble_pixels_prgba8888 qpix,
-                    quibble_simple_camera qcam, float time){
+__poem space_bulk(quibble_pixels_prgba8888 qpix,
+                  quibble_simple_camera qcam, float time){
 
     quibble_point_2D location = qb_point_2D(0,0);
     int num_ignore = 10;
@@ -318,7 +324,31 @@ __poem scene_1_bulk(quibble_pixels_prgba8888 qpix,
 
     float global_rotation = 0.3*M_PI*time;
 
-    float planet_radius = 0.6;
+    float planet_radius = 0.8;
+
+    float lid_close_time = 0.1;
+    float openness = 1;
+    if (time >= TIME_B1 - lid_close_time && time < TIME_B1){
+        openness = 1-2*(time-(TIME_B1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_B1 && time <= TIME_B1 + lid_close_time) {
+        openness = -1+2*(time-TIME_B1)/lid_close_time;
+
+    } else if (time >= TIME_C1 - lid_close_time && time <= TIME_C1) {
+        openness = 1-2*(time-(TIME_C1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_C1 && time <= TIME_C1 + lid_close_time) {
+        openness = -1+2*(time-TIME_C1)/lid_close_time;
+
+    } else if (time >= TIME_D1 - lid_close_time && time <= TIME_D1) {
+        openness = 1-2*(time-(TIME_D1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_D1 && time <= TIME_D1 + lid_close_time) {
+        openness = -1+2*(time-TIME_D1)/lid_close_time;
+
+    } else if (time >= TIME_E1 - lid_close_time && time <= TIME_E1) {
+        openness = 1-2*(time-(TIME_E1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_E1 && time <= TIME_E1 + lid_close_time) {
+        openness = -1+2*(time-TIME_E1)/lid_close_time;
+    }
+
 
     @SCALL circle_chaos(5000, qcam, qcolor |
                         location = location; radius = planet_radius;){
@@ -331,23 +361,49 @@ __poem scene_1_bulk(quibble_pixels_prgba8888 qpix,
                                 -0.1,
                                 -0.1,
                                 planet_radius*1.1);
-            histogram_output_prgba8888(output_point, _clr, cam, qpix);
+            if (output_point.y > -qcam.world_size_y*0.5*openness){
+                histogram_output_prgba8888(output_point, _clr, cam, qpix);
+            }
             @VCALL star_position(_pt);
-            create_comet(_pt, planet_radius, qpix, cam, time);
+            create_comet(_pt, planet_radius, qpix, cam, time, openness);
         }
     }
 }
 
-__poem scene_1_rings(quibble_pixels_prgba8888 qpix,
-                     quibble_simple_camera qcam, float time){
+__poem space_rings(quibble_pixels_prgba8888 qpix,
+                   quibble_simple_camera qcam, float time){
     quibble_point_2D location = qb_point_2D(0,0);
+
+    float lid_close_time = 0.1;
+    float openness = 1;
+    if (time >= TIME_B1 - lid_close_time && time < TIME_B1){
+        openness = 1-2*(time-(TIME_B1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_B1 && time <= TIME_B1 + lid_close_time) {
+        openness = -1+2*(time-TIME_B1)/lid_close_time;
+
+    } else if (time >= TIME_C1 - lid_close_time && time <= TIME_C1) {
+        openness = 1-2*(time-(TIME_C1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_C1 && time <= TIME_C1 + lid_close_time) {
+        openness = -1+2*(time-TIME_C1)/lid_close_time;
+
+    } else if (time >= TIME_D1 - lid_close_time && time <= TIME_D1) {
+        openness = 1-2*(time-(TIME_D1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_D1 && time <= TIME_D1 + lid_close_time) {
+        openness = -1+2*(time-TIME_D1)/lid_close_time;
+
+    } else if (time >= TIME_E1 - lid_close_time && time <= TIME_E1) {
+        openness = 1-2*(time-(TIME_E1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_E1 && time <= TIME_E1 + lid_close_time) {
+        openness = -1+2*(time-TIME_E1)/lid_close_time;
+    }
+
 
     int num_ignore = 10;
     quibble_pcolor_rgba8888 qcolor = qb_pcolor_rgba8888(1,1,1,1,1);
 
     float global_rotation = 0.3*M_PI*time;
 
-    float planet_radius = 0.6;
+    float planet_radius = 0.8;
 
     @SCALL circle_chaos(5000, qcam, qcolor |
                         location = location; radius = planet_radius;

@@ -32,14 +32,50 @@
 @include "QB/chaos.qbl"
 @include "QB/output.qbl"
 @include "eye.qbl"
-
+@include "space.qbl"
 
 __poem bg_layer(quibble_pixels_prgba8888 qpix,
-                quibble_simple_camera qcam){
+                quibble_simple_camera qcam, float time){
+
+    float lid_close_time = 0.1;
+    float openness = 1;
+    if (time >= TIME_B1 - lid_close_time && time < TIME_B1){
+        openness = 1-2*(time-(TIME_B1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_B1 && time <= TIME_B1 + lid_close_time) {
+        openness = -1+2*(time-TIME_B1)/lid_close_time;
+
+    } else if (time >= TIME_C1 - lid_close_time && time <= TIME_C1) {
+        openness = 1-2*(time-(TIME_C1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_C1 && time <= TIME_C1 + lid_close_time) {
+        openness = -1+2*(time-TIME_C1)/lid_close_time;
+
+    } else if (time >= TIME_D1 - lid_close_time && time <= TIME_D1) {
+        openness = 1-2*(time-(TIME_D1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_D1 && time <= TIME_D1 + lid_close_time) {
+        openness = -1+2*(time-TIME_D1)/lid_close_time;
+
+    } else if (time >= TIME_E1 - lid_close_time && time <= TIME_E1) {
+        openness = 1-2*(time-(TIME_E1-lid_close_time))/lid_close_time;
+    } else if (time >= TIME_E1 && time <= TIME_E1 + lid_close_time) {
+        openness = -1+2*(time-TIME_E1)/lid_close_time;
+    }
+
 
     quibble_point_2D pt = qb_find_point_location(_idx, qcam);
 
     quibble_pcolor_rgba8888 qcolor = qb_pcolor_rgba8888(1,1,1,1,0.001);
+
+    if (time > TIME_C1 && time < TIME_D1 &&
+        pt.y > -qcam.world_size_y*0.5*openness){
+        float r = sqrt(pt.x*pt.x + pt.y*pt.y);
+        float b = (1-0.75*r);
+        if (b < 0){
+            b = 0;
+        }
+
+        qcolor = qb_pcolor_rgba8888(0, 0, b, 1, 0);
+    }
+
     histogram_overwrite_prgba8888(pt, qcolor, qcam, qpix);
 
 }
@@ -97,7 +133,7 @@ __poem intro_sequence(quibble_pixels_prgba8888 qpix,
         }
     }
 
-    if (time >= TIME_B1 && time <= TIME_C1) {
+    if (time >= TIME_B1 && time < TIME_C1) {
 
         float iris_size = 1;
         @SCALL circle_chaos(2000, qcam, qcolor | radius = 1;){
@@ -107,4 +143,5 @@ __poem intro_sequence(quibble_pixels_prgba8888 qpix,
         }
 
     } 
+
 }
